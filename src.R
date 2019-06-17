@@ -7,40 +7,45 @@ library(ggplot2)
 source("./functions.R")
 
 # Import data
-rba_money_aggregates.raw <-
+rba_money_aggregates.df <-
     read_excel("res/rba_money_aggregates.xls",
                skip = 10) %>%
     mutate(Date = format(`Series ID`, format="%Y-%m"))
-abs_5206_key_aggregates.raw <-
+abs_5206_key_aggregates.df <-
     read_excel("res/abs_5206_key_aggregates.xls",
                sheet = "Data1",
                skip = 9) %>%
     mutate(Date = format(`Series ID`, format="%Y-%m"))
 
 # Isolate NGDP and Money Supply Growth
-money.df <- inner_join(abs_5206_key_aggregates.raw,
-                       rba_money_aggregates.raw,
+data.df <- inner_join(abs_5206_key_aggregates.df,
+                       rba_money_aggregates.df,
                        by = 'Date') %>%
-    select(Date, M = DMACN, NGDP_Q = A2304350J) %>%
-    
+    select(Date,
+           M = DMACN,
+           Y = A2304334J,
+           NY = A2304350J) %>%
     # Percentage growths + 1
     mutate(M_Growth = c(M[-1]/M[-length(M)], NA),
-           NGDP_Q_Growth = c(NGDP_Q[-1]/NGDP_Q[-length(NGDP_Q)], NA)) %>%
+           NY_Growth = c(NY[-1]/NY[-length(NY)], NA),
+           Y_Growth = c(Y[-1]/Y[-length(NY)], NA),
+           P_Growth = NY_Growth/Y_Growth) %>%
     na.omit()
 
 # Create aggregate df across t quarters
-t <- 4*3
+t <- 20
 
-money_g_agg.df <-
-    data.frame(M_Growth = agg_prod(money.df$M_Growth, t), 
-               NGDP_Growth = agg_prod(money.df$NGDP_Q_Growth, t))
+growth_aggs.df <-
+    data.frame(M_Growth = log(agg_prod(data.df$M_Growth, t)), 
+               Y_Growth = log(agg_prod(data.df$Y_Growth, t)),
+               P_Growth = log(agg_prod(data.df$P_Growth, t)))
 
 # LM Model
-money.lm <- lm(NGDP_Growth ~ M_Growth, money_g_agg.df)
-summary(money.lm)
+growth_aggs.lm <- lm(P_Growth ~ M_Growth, growth_aggs.df)
+summary(growth_aggs.lm)
 
 # Graph relationship
-ggplot(money_g_agg.df, aes(x = M_Growth, y = NGDP_Growth)) + 
+ggplot(growth_aggs.df, aes(x = M_Growth, y = P_Growth)) + 
     geom_point() +
     geom_smooth(method = "lm", formula = y ~ x) +
     geom_abline()
