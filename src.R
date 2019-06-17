@@ -23,13 +23,25 @@ money.df <- inner_join(abs_5206_key_aggregates.raw,
            NGDP_Q_Growth = c(NGDP_Q[-1]/NGDP_Q[-length(NGDP_Q)], NA)) %>%
     na.omit()
 
+t <- 12
+
+money_g_agg.df <-
+    data.frame(M1_Growth = sapply(split(
+        money.df$M1_Growth,
+        1:nrow(money.df) %/% t
+    ), prod),
+    NGDP_Growth = sapply(split(
+        money.df$NGDP_Q_Growth,
+        1:nrow(money.df) %/% t), prod
+    ))
+    
 # Graph relationship
-ggplot(money.df, aes(x = M1_Growth, y = NGDP_Q_Growth)) + 
+ggplot(money_g_agg.df, aes(x = M1_Growth, y = NGDP_Growth)) + 
     geom_point() +
     geom_smooth(method = "lm", formula = y ~ x) +
     geom_abline()
 
 # LM Model
-money.lm <- lm(NGDP_Q_Growth ~ M1_Growth, money.df)
+money.lm <- lm(NGDP_Growth ~ M1_Growth, money_g_agg.df)
 summary(money.lm)
     
