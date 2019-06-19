@@ -22,7 +22,7 @@ data.df <- inner_join(abs_5206_key_aggregates.df,
                        rba_money_aggregates.df,
                        by = 'Date') %>%
     select(Date,
-           M = DMACN,
+           M = DMAM3N,
            Y = A2304334J,
            NY = A2304350J) %>%
     # Percentage growths + 1
@@ -41,11 +41,11 @@ growth_aggs.df <-
                P_Growth = log(agg_prod(data.df$P_Growth, t)))
 
 # LM Model
-growth_aggs.lm <- lm(P_Growth ~ M_Growth, growth_aggs.df)
+growth_aggs.lm <- lm(Y_Growth ~ M_Growth, growth_aggs.df)
 summary(growth_aggs.lm)
 
 # Graph relationship
-ggplot(growth_aggs.df, aes(x = M_Growth, y = P_Growth)) + 
+ggplot(growth_aggs.df, aes(x = M_Growth, y = Y_Growth)) + 
     geom_point() +
     geom_smooth(method = "lm", formula = y ~ x) +
     geom_abline()

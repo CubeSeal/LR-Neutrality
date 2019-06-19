@@ -5,7 +5,7 @@ agg_prod <- function(vector, n) {
     
     nr <- length(vector)
     
-    list_of_vecs <- split(vector, (1:nr) %/% n)
+    list_of_vecs <- split(vector, ceiling(1:nr / n))
     return_value <- sapply(list_of_vecs, prod)
     
     return(return_value)
